@@ -1,5 +1,5 @@
 #importing packages
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 import pandas as pd
@@ -49,12 +49,6 @@ if dt:
     y_test_tree = dt.predict(X_test)
     y_train_tree = dt.predict(X_train)
 
-    # computing the accuracy of the model performance
-    acc_train_tree = accuracy_score(y_train,y_train_tree)
-    acc_test_tree = accuracy_score(y_test,y_test_tree)
-    print("Decision Tree: Accuracy on training Data: {:.3f}".format(acc_train_tree))
-    print("Decision Tree: Accuracy on test Data: {:.3f}".format(acc_test_tree))
-
     # checking the feature importance in the model
     plt.figure(figsize=(9,7))
     n_features = X_train.shape[1]
@@ -72,8 +66,24 @@ if dt:
     fig.savefig('decision-tree.png')
 
     # print metrics
-    print("\nDecision Tree Classification Report:")
-    print(classification_report(y_test, y_test_tree))
+    cm = confusion_matrix(y_test, y_test_tree)
+    tn, fp, fn, tp = cm[0][0], cm[0][1], cm[1][0], cm[1][1]
+    instances = len(y_test)
+    accuracy = (tp+tn)/instances
+    fpr = fp/(tn+fp)
+    fnr = fn/(tp+fn)
+    precision = tp/(tp+fp)
+    recall = tp/(tp+fn)
+    y_prob_tree = dt.predict_proba(X_test)[:, 1]
+    auc = roc_auc_score(y_test, y_prob_tree)
+    print("\nMetrics of Decision Tree Model:")
+    print(f"Accuracy:\t\t{accuracy:.3%}")
+    print(f"False Positive Rate:\t{fpr:.3f}")
+    print(f"False Negative Rate:\t{fnr:.3f}")
+    print(f"Precision:\t\t{precision:.3f}")
+    print(f"Recall:\t\t\t{recall:.3f}")
+    print(f"AUC:\t\t\t{auc:.3f}")
+
 '''------------------------ End of DT ----------------------'''
 
 '''---------------------- Start of MLP ---------------------'''
@@ -88,11 +98,25 @@ if mlp:
     y_test_mlp = mlp.predict(X_test)
     y_train_mlp = mlp.predict(X_train)
 
-    # computing the accuracy of the model performance
-    acc_train_mlp = accuracy_score(y_train,y_train_mlp)
-    acc_test_mlp = accuracy_score(y_test,y_test_mlp)
-    print("\nMLP: Accuracy on training Data: {:.3f}".format(acc_train_mlp))
-    print("MLP: Accuracy on test Data: {:.3f}".format(acc_test_mlp))
+    # print metrics
+    cm = confusion_matrix(y_test, y_test_mlp)
+    tn, fp, fn, tp = cm[0][0], cm[0][1], cm[1][0], cm[1][1]
+    instances = len(y_test)
+    accuracy = (tp+tn)/instances
+    fpr = fp/(tn+fp)
+    fnr = fn/(tp+fn)
+    precision = tp/(tp+fp)
+    recall = tp/(tp+fn)
+    y_prob_mlp = dt.predict_proba(X_test)[:, 1]
+    auc = roc_auc_score(y_test, y_prob_mlp)
+    print("\nMetrics of MLP Model:")
+    print(f"Accuracy:\t\t{accuracy:.3%}")
+    print(f"False Positive Rate:\t{fpr:.3f}")
+    print(f"False Negative Rate:\t{fnr:.3f}")
+    print(f"Precision:\t\t{precision:.3f}")
+    print(f"Recall:\t\t\t{recall:.3f}")
+    print(f"AUC:\t\t\t{auc:.3f}")
+
 '''------------------------ End of MLP ---------------------'''
 if svm:
     from sklearn.model_selection import cross_val_score
