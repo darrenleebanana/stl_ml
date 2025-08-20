@@ -1,5 +1,3 @@
-#importing packages
-#importing packages
 import os
 import numpy as np
 import pandas as pd
@@ -23,7 +21,7 @@ data = data0.drop(['Domain'], axis = 1).copy()
 fn = ['Have_IP', 'Have_At', 'URL_Length', 'URL_Depth','Redirection', 
             'https_Domain', 'TinyURL', 'Prefix/Suffix', 'DNS_Record', 
             'Domain_Age', 'Domain_End', 'iFrame', 'Mouse_Over','Right_Click', 'Web_Forwards']
-cn =['Good','Bad']
+cn = ['Good','Bad']
 
 # shuffling the rows in the dataset so that when splitting the train and test set are equally distributed
 data = data.sample(frac=1).reset_index(drop=True)
@@ -41,13 +39,12 @@ acc_train = []
 acc_test = []
 dt = False
 mlp = False
-svm = False
-rf = True
+svm = True
+rf = False
 
 '''----------------------- Start of DT ---------------------'''
 if dt: 
     # Decision Tree model
-    # instantiate the model 
     dt = DecisionTreeClassifier(max_depth = 5)
     # fit the model 
     dt.fit(X_train, y_train)
@@ -93,33 +90,51 @@ if dt:
 '''------------------------ End of DT ----------------------'''
 
 '''---------------------- Start of MLP ---------------------'''
-if mlp:
+if True:
     # instantiate the model 
     mlp = MLPClassifier(hidden_layer_sizes=(50,), solver='lbfgs', alpha=0.01, max_iter=500)
-    # fit the model 
     mlp.fit(X_train, y_train)
-    # predicting the target value from the model for the samples
-    y_test_mlp = mlp.predict(X_test)
-    y_train_mlp = mlp.predict(X_train)
 
-    # print metrics
+    # predictions
+    y_test_mlp = mlp.predict(X_test)
+
+    # confusion matrix and metrics
     cm = confusion_matrix(y_test, y_test_mlp)
     tn, fp, fn, tp = cm[0][0], cm[0][1], cm[1][0], cm[1][1]
     instances = len(y_test)
     accuracy = (tp+tn)/instances
-    fpr = fp/(tn+fp)
-    fnr = fn/(tp+fn)
-    precision = tp/(tp+fp)
-    recall = tp/(tp+fn)
-    y_prob_mlp = dt.predict_proba(X_test)[:, 1]
+    fpr = fp/(tn+fp) if (tn+fp) > 0 else 0
+    fnr = fn/(tp+fn) if (tp+fn) > 0 else 0
+    precision = tp/(tp+fp) if (tp+fp) > 0 else 0
+    recall = tp/(tp+fn) if (tp+fn) > 0 else 0
+    y_prob_mlp = mlp.predict_proba(X_test)[:, 1]
     auc = roc_auc_score(y_test, y_prob_mlp)
-    print("\nMetrics of MLP Model:")
-    print(f"Accuracy:\t\t{accuracy:.3%}")
-    print(f"False Positive Rate:\t{fpr:.3f}")
-    print(f"False Negative Rate:\t{fnr:.3f}")
-    print(f"Precision:\t\t{precision:.3f}")
-    print(f"Recall:\t\t\t{recall:.3f}")
-    print(f"AUC:\t\t\t{auc:.3f}")
+
+    # ensure directories exist
+    os.makedirs("metrics", exist_ok=True)
+    os.makedirs("visualisation", exist_ok=True)
+
+    # save metrics to text file
+    metrics_path = os.path.join("metrics", "MLP-Metrics.txt")
+    with open(metrics_path, "w") as f:
+        f.write("metrics of mlp model:\n")
+        f.write(f"accuracy:\t\t{accuracy:.3%}\n")
+        f.write(f"false positive rate:\t{fpr:.3f}\n")
+        f.write(f"false negative rate:\t{fnr:.3f}\n")
+        f.write(f"precision:\t\t{precision:.3f}\n")
+        f.write(f"recall:\t\t\t{recall:.3f}\n")
+        f.write(f"auc:\t\t\t{auc:.3f}\n")
+
+    # save confusion matrix as png
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=mlp.classes_)
+    disp.plot(cmap="Blues", values_format="d")
+    plt.title("confusion matrix - mlp")
+    png_path = os.path.join("visualisation", "MLP-Confusion-Matrix.png")
+    plt.savefig(png_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    print(f"metrics saved to {metrics_path}")
+    print(f"confusion matrix saved to {png_path}")
 
 '''------------------------ End of MLP ---------------------'''
 if svm:
@@ -164,14 +179,14 @@ if svm:
             rbf      100    0.957       0.952     0.959     0.956
             '''
 
-    # --- Train Linear SVM ---
+    # Train Linear SVM
     svm = SVC(kernel='linear', C=1, random_state=16)
     svm.fit(X_train, y_train)
 
-    # --- Predictions ---
+    # Predictions
     y_pred = svm.predict(X_test)
 
-    # --- Standard metrics ---
+    # Standard metrics
     acc = accuracy_score(y_test, y_pred)
     prec = precision_score(y_test, y_pred, zero_division=0)
     rec = recall_score(y_test, y_pred, zero_division=0)
@@ -186,39 +201,54 @@ if svm:
     print("Classification Report:")
     print(classification_report(y_test, y_pred, zero_division=0))
 
-    # --- Confusion Matrix (values + heatmap) ---
+    # Confusion matrix
     cm = confusion_matrix(y_test, y_pred)
-    tn, fp, fn, tp = cm[0,0], cm[0,1], cm[1,0], cm[1,1]
+    tn, fp, fn, tp = cm[0, 0], cm[0, 1], cm[1, 0], cm[1, 1]
 
-    # Derived rates
+    # Derived metrics
     instances = len(y_test)
     fpr = fp / (tn + fp) if (tn + fp) > 0 else 0.0
     fnr = fn / (tp + fn) if (tp + fn) > 0 else 0.0
-
-    # AUC using decision scores (preferred for SVM without probability=True)
     y_scores = svm.decision_function(X_test)
     auc = roc_auc_score(y_test, y_scores)
 
-    print("\nAdditional Metrics:")
-    print(f"False Positive Rate:\t{fpr:.3f}")
-    print(f"False Negative Rate:\t{fnr:.3f}")
-    print(f"AUC:\t\t\t{auc:.3f}")
+    # Ensure directories exist
+    os.makedirs("metrics", exist_ok=True)
+    os.makedirs("visualisation", exist_ok=True)
 
-    # Plot heatmap
-    ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=svm.classes_).plot(cmap="Blues", values_format="d")
+    # Save metrics to text file
+    metrics_path = os.path.join("metrics", "LinearSVM-Metrics.txt")
+    with open(metrics_path, "w") as f:
+        f.write("Metrics of Linear SVM (C=1):\n")
+        f.write(f"Accuracy:\t\t{acc:.3f}\n")
+        f.write(f"Precision:\t\t{prec:.3f}\n")
+        f.write(f"Recall:\t\t\t{rec:.3f}\n")
+        f.write(f"F1 Score:\t\t{f1:.3f}\n")
+        f.write(f"False Positive Rate:\t{fpr:.3f}\n")
+        f.write(f"False Negative Rate:\t{fnr:.3f}\n")
+        f.write(f"AUC:\t\t\t{auc:.3f}\n")
+
+    # Save confusion matrix as PNG
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=svm.classes_)
+    disp.plot(cmap="Blues", values_format="d")
     plt.title("Confusion Matrix - Linear SVM (C=1)")
-    plt.show()
+    plt.savefig(os.path.join("visualisation", "LinearSVM-Confusion-Matrix.png"), dpi=300, bbox_inches="tight")
+    plt.close()
 
-    # --- Feature Weights (coefficients) ---
+    # Save feature weights as PNG
     coef = svm.coef_.ravel()
-    plt.figure(figsize=(9,7))
+    plt.figure(figsize=(9, 7))
     plt.barh(range(len(coef)), coef, align='center')
     plt.yticks(np.arange(len(coef)), X_train.columns)
     plt.xlabel("Coefficient magnitude")
     plt.ylabel("Feature")
-    plt.title("SVM (Linear, C=1) Feature Weights")
-    plt.savefig("svm-linear-feature-importance.png")
-    plt.show()
+    plt.title("Linear SVM (C=1) Feature Weights")
+    plt.tight_layout()
+    plt.savefig(os.path.join("visualisation", "LinearSVM-Feature-Weights.png"), dpi=300, bbox_inches="tight")
+    plt.close()
+
+    print(f"Metrics saved to {metrics_path}")
+    print("Visualisations saved to visualisation/")
 
 
 if rf:
@@ -243,13 +273,13 @@ if rf:
     rec = recall_score(y_test, y_pred_rf, zero_division=0)
     f1 = f1_score(y_test, y_pred_rf, zero_division=0)
 
-    print("random forest results:")
-    print(f"accuracy : {acc:.3f}")
-    print(f"precision: {prec:.3f}")
-    print(f"recall   : {rec:.3f}")
-    print(f"f1 score : {f1:.3f}\n")
+    print("Random Forest Results:")
+    print(f"Accuracy : {acc:.3f}")
+    print(f"Precision: {prec:.3f}")
+    print(f"Recall   : {rec:.3f}")
+    print(f"F1 score : {f1:.3f}\n")
 
-    print("classification report:")
+    print("Classification report:")
     print(classification_report(y_test, y_pred_rf, zero_division=0))
 
     # confusion matrix values
@@ -263,17 +293,17 @@ if rf:
     y_prob_rf = rf.predict_proba(X_test)[:, 1]
     auc = roc_auc_score(y_test, y_prob_rf)
 
-    print("\nadditional metrics:")
-    print(f"false positive rate:\t{fpr:.3f}")
-    print(f"false negative rate:\t{fnr:.3f}")
-    print(f"auc:\t\t\t{auc:.3f}")
+    print("\nAdditional metrics:")
+    print(f"False positive rate:\t{fpr:.3f}")
+    print(f"False negative rate:\t{fnr:.3f}")
+    print(f"AUC:\t\t\t{auc:.3f}")
 
     # confusion matrix plot
     ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=rf.classes_).plot(
         cmap="Blues", values_format="d"
     )
-    plt.title("confusion matrix - random forest")
-    plt.show()
+    plt.title("Confusion Matrix - Random Forest")
+    plt.savefig("random-forest-confusion-matrix.png")
 
     # feature importance chart
     importances = rf.feature_importances_
@@ -283,8 +313,7 @@ if rf:
     plt.barh(range(len(indices)), importances[indices], align='center')
     plt.yticks(range(len(indices)), X_train.columns[indices])
     plt.xlabel("feature importance")
-    plt.ylabel("feature")
-    plt.title("random forest feature importances")
+    plt.ylabel("Feature")
+    plt.title("Random Forest Feature Importances")
     plt.tight_layout()
     plt.savefig("random-forest-feature-importance.png")
-    plt.show()
