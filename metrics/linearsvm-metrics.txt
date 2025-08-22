@@ -1,0 +1,25 @@
+Metrics of Linear SVM:
+Accuracy:		0.953
+Precision:		0.993
+Recall:			0.913
+F1 Score:		0.951
+False Positive Rate:	0.007
+False Negative Rate:	0.087
+AUC:			0.977
+
+Confusion Matrix:
+   150     1
+   13     136
+   TN     FP
+   FN     TP
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.92      0.99      0.96       151
+           1       0.99      0.91      0.95       149
+
+    accuracy                           0.95       300
+   macro avg       0.96      0.95      0.95       300
+weighted avg       0.96      0.95      0.95       300
+

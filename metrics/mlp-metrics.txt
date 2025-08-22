@@ -1,0 +1,25 @@
+Metrics of MLP:
+Accuracy:		0.950
+Precision:		0.953
+Recall:			0.946
+F1 Score:		0.949
+False Positive Rate:	0.046
+False Negative Rate:	0.054
+AUC:			0.971
+
+Confusion Matrix:
+   144     7
+    8     141
+   TN     FP
+   FN     TP
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.95      0.95      0.95       151
+           1       0.95      0.95      0.95       149
+
+    accuracy                           0.95       300
+   macro avg       0.95      0.95      0.95       300
+weighted avg       0.95      0.95      0.95       300
+

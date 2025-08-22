@@ -15,13 +15,14 @@ from sklearn.metrics import (
     classification_report, confusion_matrix, ConfusionMatrixDisplay, roc_auc_score
 )
 
-filename = os.path.join("datasets", "urldata.csv")
+filename = os.path.join("datasets", "urldata_two_features.csv")
 data0 = pd.read_csv(filename)
 data = data0.drop(['Domain'], axis = 1).copy()
 
 featname = ['Have_IP', 'Have_At', 'URL_Length', 'URL_Depth','Redirection', 
             'https_Domain', 'TinyURL', 'Prefix/Suffix', 'DNS_Record', 
-            'Domain_Age', 'Domain_End', 'iFrame', 'Mouse_Over','Right_Click', 'Web_Forwards']
+            'Domain_Age', 'Domain_End', 'iFrame', 'Mouse_Over','Right_Click', 
+            'Web_Forwards', 'Nameserver_Count', 'Subdomain_Count']
 cn = ['Good','Bad']
 
 # shuffling the rows in the dataset so that when splitting the train and test set are equally distributed
@@ -88,7 +89,7 @@ def _maybe_plot_importance(estimator, X_cols, title_prefix: str) -> None:
         plt.ylabel("Feature")
         plt.title(f"{title_prefix} Feature Importances")
         plt.tight_layout()
-        plt.savefig(os.path.join(OUT_VIZ, f"{title_prefix.lower().replace(' ', '-')}-feature-importance.png"),
+        plt.savefig(os.path.join(OUT_VIZ, f"{title_prefix.lower().replace(' ', '-')}-two-features-feature-importance.png"),
                     dpi=300, bbox_inches="tight")
         plt.close()
 
@@ -102,7 +103,7 @@ def _maybe_plot_importance(estimator, X_cols, title_prefix: str) -> None:
         plt.ylabel("Feature")
         plt.title(f"{title_prefix} Feature Weights")
         plt.tight_layout()
-        plt.savefig(os.path.join(OUT_VIZ, f"{title_prefix.lower().replace(' ', '-')}-feature-weights.png"),
+        plt.savefig(os.path.join(OUT_VIZ, f"{title_prefix.lower().replace(' ', '-')}-two-features-feature-weights.png"),
                     dpi=300, bbox_inches="tight")
         plt.close()
 
@@ -124,7 +125,7 @@ def evaluate_model(name: str, estimator, X_train, y_train, X_test, y_test) -> Di
     auc = roc_auc_score(y_test, scores_vec) if scores_vec is not None else float("nan")
 
     # Persist metrics
-    metrics_path = os.path.join(OUT_METRICS, f"{name.lower().replace(' ', '')}-metrics.txt")
+    metrics_path = os.path.join(OUT_METRICS, f"{name.lower().replace(' ', '')}-two-features-metrics.txt")
     _write_metrics_txt(metrics_path, name, {
         "acc": acc, "prec": prec, "rec": rec, "f1": f1, "fpr": fpr, 
         "fnr": fnr, "auc": auc, "tp": tp, "fp": fp, "tn": tn, "fn": fn,
@@ -132,7 +133,7 @@ def evaluate_model(name: str, estimator, X_train, y_train, X_test, y_test) -> Di
     })
 
     # Confusion matrix plot
-    cm_png = os.path.join(OUT_VIZ, f"{name.lower().replace(' ', '-')}-confusion-matrix.png")
+    cm_png = os.path.join(OUT_VIZ, f"{name.lower().replace(' ', '-')}-two-features-confusion-matrix.png")
     _plot_cm(cm, getattr(estimator, "classes_", np.unique(y_test)), f"Confusion Matrix - {name}", cm_png)
 
     # Optional importance/weights
@@ -141,7 +142,7 @@ def evaluate_model(name: str, estimator, X_train, y_train, X_test, y_test) -> Di
     if isinstance(estimator, DecisionTreeClassifier):
         fig, _ = plt.subplots(figsize=(8, 8), dpi=600)
         tree.plot_tree(estimator, feature_names=X_train.columns, class_names=cn, filled=True)
-        fig.savefig(os.path.join(OUT_VIZ, "decision-tree.png"), bbox_inches="tight")
+        fig.savefig(os.path.join(OUT_VIZ, "decision-tree-two-features.png"), bbox_inches="tight")
         plt.close(fig)
 
     print(f"{name} Results:")

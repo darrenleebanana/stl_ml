@@ -1,0 +1,25 @@
+Metrics of Decision Tree:
+Accuracy:		0.947
+Precision:		1.000
+Recall:			0.893
+F1 Score:		0.943
+False Positive Rate:	0.000
+False Negative Rate:	0.107
+AUC:			0.975
+
+Confusion Matrix:
+   151     0
+   16     133
+   TN     FP
+   FN     TP
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.90      1.00      0.95       151
+           1       1.00      0.89      0.94       149
+
+    accuracy                           0.95       300
+   macro avg       0.95      0.95      0.95       300
+weighted avg       0.95      0.95      0.95       300
+
