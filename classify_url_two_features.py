@@ -161,8 +161,8 @@ def evaluate_model(name: str, estimator, X_train, y_train, X_test, y_test) -> Di
 models = {}
 
 # Ensure output folders once
-OUT_METRICS = "metrics"
-OUT_VIZ = "visualisation"
+OUT_METRICS = "augmented_metrics"
+OUT_VIZ = "augmented_visualisation"
 os.makedirs(OUT_METRICS, exist_ok=True)
 os.makedirs(OUT_VIZ, exist_ok=True)
 
